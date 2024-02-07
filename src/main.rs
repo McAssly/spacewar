@@ -1,3 +1,5 @@
+use std::{ffi::{c_void, c_int}, mem};
+
 use raylib_ffi::*;
 use colors::*;
 use noise::{NoiseFn, Perlin};
@@ -55,6 +57,11 @@ enum GameState {
     Game,
 }
 
+unsafe fn convert_cvoid(value: f32) -> *const c_void {
+    let bytes: [u8; 4] = mem::transmute_copy(&value);
+    bytes.as_ptr() as *const c_void
+}
+
 fn main() { unsafe {
     InitWindow(512, 512, rl_str!("Spacewar!"));
     let shader = LoadShader(rl_str!("base.vs"), rl_str!("scanlines.fs"));
@@ -81,6 +88,9 @@ fn main() { unsafe {
     let mut p1 = Ship::new(ship::Player::One);
     let mut p2 = Ship::new(ship::Player::Rob);
 
+    let mut ms = 0.0;
+    let time_loc = GetShaderLocation(shader, rl_str!("time"));
+
     while !should_exit { 
         if WindowShouldClose() {
             should_exit = true;
@@ -88,6 +98,8 @@ fn main() { unsafe {
         let delta = delta!();
         let cursor = GetMousePosition();
         if IsKeyPressed(key!(F1)) { stars = draw_stars(rand::thread_rng().gen()); }
+        SetShaderValue(shader, time_loc, convert_cvoid(ms), enums::ShaderUniformDataType::Float as c_int);
+        ms += delta;
 
         match &game_state {
             GameState::Menu => {
