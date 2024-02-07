@@ -1,38 +1,29 @@
 #version 330
 
 in vec2 fragTexCoord;
-in vec4 fragColor;
+out vec4 fragColor;
 
-uniform sampler2D texture0;
+uniform sampler2D _texture;
 uniform vec4 colDiffuse;
 
-out vec4 finalColor;
+out vec4 outColor;
 
-const float renderWidth = 800;
-const float renderHeight = 450;
-float offset = 0.0;
+const float PI = 3.14;
+const vec4 OVERLAY = vec4(0.9, 1.0, 0.7, 1);
 
 uniform float time;
 
 void main() {
-    float frequency = renderHeight/3.0;
+    vec2 uv = 0.5 + (fragTexCoord - 0.5)*0.7;
 
-    vec2 uv = 0.5 + (fragTexCoord - 0.5)*0.9;
+    vec4 color = texture(_texture, fragTexCoord);
+    vec4 prime = vec4(color * color * 1.2);
 
-    vec4 color = texture(texture0, fragTexCoord);
-
-    color = clamp(color*0.5 + 0.5*color*color*1.2, 0.0, 1.0);
-    color *= 0.5 + 0.5*16.0*uv.x*uv.y*(1.0 - uv.x)*(1.0 - uv.y);
-    color *= vec4(0.8, 1.0, 0.7, 1);
-    color *= 0.9 + 0.1*sin(10.0*tval + uv.y*1000.0);
-    color *= 0.97 + 0.03*sin(110.0*tval);
+    color = clamp(prime, 0.1, 1.0);
+    color *= 0.5 + 0.5 * 18.0 * uv.x * uv.y * (1.0 - uv.x)*(1.0 - uv.y);
+    color *= OVERLAY;
+    color *= 0.9 + 0.1*sin(5.0*time + uv.y*1000.0);
+    color *= 0.9;
 
     fragColor = color;
-	
-    float globalPos = (fragTexCoord.y + offset) * frequency;
-    float wavePos = cos((fract(globalPos) - 0.5)*3.14);
-
-    vec4 texelColor = texture(texture0, fragTexCoord);
-
-    finalColor = mix(vec4(0.0, 0.3, 0.0, 0.0), texelColor, wavePos);
 }
